@@ -11,7 +11,7 @@ Student ID: SLAE-1511
 ## Articles
 
 * Assignment 1: [Linux x86 Bind TCP Shell](https://voidsec.com/slae-assignment-1-bind-tcp-shell)
-* Assignment 2:
+* Assignment 2: [Linux x86 Reverse TCP Shell](https://voidsec.com/slae-assignment-2-reverse-tcp-shell/)
 * Assignment 3:
 * Assignment 4:
 * Assignment 5:
