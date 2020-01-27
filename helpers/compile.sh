@@ -1,1 +1,1 @@
-gcc -fno-stack-protector -z execstack shellcode.c -o shellcode
+gcc -m32 -fno-stack-protector -z execstack $1 -o shellcode
