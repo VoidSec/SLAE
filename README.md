@@ -18,4 +18,4 @@ Student ID: SLAE-1511
 * Assignment 6:
 * Assignment 7:
 
-* Bonus Assignment 1: [Linux x64 EXECVE shellcode executing ls]()
+* Bonus Assignment 1: [Linux x64 EXECVE shellcode executing ls](https://github.com/VoidSec/SLAE/blob/master/bonus/x64_execve_ls.nasm)
