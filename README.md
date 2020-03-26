@@ -14,7 +14,7 @@ Student ID: SLAE-1511
 * Assignment 2: [Linux x86 Reverse TCP Shellcode](https://voidsec.com/slae-assignment-2-reverse-tcp-shell/)
 * Assignment 3: [Linux x86 Egghunter Shellcode](https://voidsec.com/slae-assignment-3-egghunter/)
 * Assignment 4: [Linux x86 Byte Swapper Shellcode Encoder](https://voidsec.com/slae-assignment-4-custom-shellcode-encoder)
-* Assignment 5:
+* Assignment 5: [Linux x86 Metasploit Shellcode Analysis](https://voidsec.com/assignment-5-metasploit-shellcode-analysis)
 * Assignment 6:
 * Assignment 7:
 
