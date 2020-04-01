@@ -1,0 +1,14 @@
+1 orig: 21
++
+1 poly: 23
+max size: 31.5
+
+2 orig: 37
++
+2 poly: 51
+max size: 55.5
+
+3 orig: 39
++
+3 poly: 42
+max size: 58.5
