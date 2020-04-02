@@ -43,12 +43,12 @@ def _str2vec(string, l=4):
     :return:
         A vector containing ceil(n / l) elements where n is string's length.
     """
-    n = len(string)#20
+    n = len(string)#24
     # Split the string into chunks
-    num_chunks = math.ceil(n / l) #5
+    num_chunks = math.ceil(n / l) #6
     chunks = [string[l * i:l * (i + 1)] for i in range(num_chunks)] # chunk=key[4*0:4*(0+1)] "grep" chars four by four 0-11
     #print("CHUNKS:")
-    #print(chunks) #will result in 5 chunks
+    #print(chunks) #will result in 6 chunks
     return [sum([chars << 8 * j for j, chars in enumerate(chunk)]) for chunk in chunks]#byte shift to trasform in c_uint32
 
 
@@ -141,8 +141,7 @@ def _decrypt(v, k):
     :return:
         The original message.
     """
-    y, z = [ctypes.c_uint32(x)
-            for x in v]
+    y, z = [ctypes.c_uint32(x) for x in v]
     sum = ctypes.c_uint32(0xC6EF3720)
     delta = 0x9E3779B9
 
