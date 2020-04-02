@@ -1,14 +1,14 @@
-1 orig: 21
-+
-1 poly: 23
+1 orig size: 21
+1 poly size: 23
++9.52%
 max size: 31.5
 
-2 orig: 37
-+
-2 poly: 51
+2 orig size: 37
+2 poly size: 51
++37.83%
 max size: 55.5
 
-3 orig: 39
-+
-3 poly: 42
+3 orig size: 39
+3 poly size: 42
++7.69%
 max size: 58.5

