@@ -33,8 +33,8 @@ encoder:								; encoder
 	mov ecx, 3							; load the number of our shellcode chunks, used to loop. (shellcode length is 24. 24/4(DWORD)=6 blocks/2(chunks taken 2by 2)=3)
 
 encrypt_loop:
-	;push ecx							; save counter status before entering 32 iteration loop
-    ;mov ecx, 32							; store loop counter, we nedd to cycle x32 times
+	push ecx							; save counter status before entering 32 iteration loop
+    mov ecx, 32							; store loop counter, we nedd to cycle x32 times
 	mov edx, 0x9E3779B9					; EDX = delta
 	loop_32:
 		mov ebx, dword [esi+4]			; v1 load encrypted_shellcode's chunk DWORD pointed by ESI in EBX | EBX=B
@@ -78,7 +78,7 @@ encrypt_loop:
 		xor eax, ebx					; EAX = ((v0<<4) + k2) ^ (v0 + sum) ^ ((v0>>5) + k3)
 		add eax, dword [esi+4]			; v1 = v1 + ((v0<<4) + k2) ^ (v0 + sum) ^ ((v0>>5) + k3)
 		push eax						; store encrypted v1 on stack
-		;loop loop_32					; ECX is 0? No, we go back at loop_32 and execute the cicle again
+		loop loop_32					; ECX is 0? No, we go back at loop_32 and execute the cicle again
 	; save encrypted v0, v1
 	save:
 	pop eax								; EAX=v0
@@ -86,12 +86,12 @@ encrypt_loop:
 	pop eax								; EAX=v1
 	mov dword [esi+4], eax				; store encrypted v1 back to shellcode "buffer"
 	; ------
-	;mov ecx, 62							; for every loop_32 cicle I've saved v0,v1 on the stack (32*2)-2(already popped)
-	;stack_clean:
-		;pop eax							; clean the stack of precedent v0,v1 values popping saved values in eax
-		;loop stack_clean
+	mov ecx, 62							; for every loop_32 cicle I've saved v0,v1 on the stack (32*2)-2(already popped)
+	stack_clean:
+		pop eax							; clean the stack of precedent v0,v1 values popping saved values in eax
+		loop stack_clean
 	; ------
-	;pop ecx								; restore ECX counter status
+	pop ecx								; restore ECX counter status
 	add esi, 8							; select next chunk "couple"				
     loop encrypt_loop					; ECX is 0? No, we go back at decrypt_loop and execute the cicle again
     exec:
