@@ -1,1 +1,1 @@
-ld -m elf_i386 -o out $1
+ld -m elf_i386 -N -o out $1
