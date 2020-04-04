@@ -57,7 +57,7 @@ encrypt_loop:
 		pop ebx							; restore EBX = (v1<<4) + k0)
 		xor eax, ebx					; EAX = ((v1<<4) + k0) ^ (v1 + sum) ^ ((v1>>5) + k1)
 		add eax, dword [esi]			; v0 = v0 + ((v1<<4) + k0) ^ (v1 + sum) ^ ((v1>>5) + k1)
-		push eax						; store encrypted v0 on stack
+		mov dword [esi], eax			; store encrypted v0 back to shellcode "buffer"
 		;--------------------------------------------------------------------------------------
 		mov ebx, dword [esi]			; v0 load shellcode's chunk DWORD pointed by ESI in EBX | EBX=A
 		; v1 = v1 + ((v0<<4) + k2) ^ (v0 + sum) ^ ((v0>>5) + k3);
@@ -77,20 +77,8 @@ encrypt_loop:
 		pop ebx							; restore EBX = (v0<<4) + k2)
 		xor eax, ebx					; EAX = ((v0<<4) + k2) ^ (v0 + sum) ^ ((v0>>5) + k3)
 		add eax, dword [esi+4]			; v1 = v1 + ((v0<<4) + k2) ^ (v0 + sum) ^ ((v0>>5) + k3)
-		push eax						; store encrypted v1 on stack
+		mov dword [esi+4], eax			; store encrypted v1 back to shellcode "buffer"
 		loop loop_32					; ECX is 0? No, we go back at loop_32 and execute the cicle again
-	; save encrypted v0, v1
-	save:
-	pop eax								; EAX=v1
-	mov dword [esi+4], eax				; store encrypted v1 back to shellcode "buffer"
-	pop eax								; EAX=v0
-	mov dword [esi], eax				; store encrypted v0 back to shellcode "buffer"
-	; ------
-	mov ecx, 62							; for every loop_32 cicle I've saved v0,v1 on the stack (32*2)-2(already popped)
-	stack_clean:
-		pop eax							; clean the stack of precedent v0,v1 values popping saved values in eax
-		loop stack_clean
-	; ------
 	pop ecx								; restore ECX counter status
 	add esi, 8							; select next chunk "couple"				
     loop encrypt_loop					; ECX is 0? No, we go back at decrypt_loop and execute the cicle again
