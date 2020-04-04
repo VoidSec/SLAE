@@ -35,7 +35,7 @@ encoder:								; encoder
 encrypt_loop:
 	push ecx							; save counter status before entering 32 iteration loop
     mov ecx, 32							; store loop counter, we nedd to cycle x32 times
-	mov edx, 0x9E3779B9					; EDX = delta
+	xor edx, edx						; clean EDX (sum), EDX = 0
 	loop_32:
 		mov ebx, dword [esi+4]			; v1 load encrypted_shellcode's chunk DWORD pointed by ESI in EBX | EBX=B
 		; sum = sum+delta
