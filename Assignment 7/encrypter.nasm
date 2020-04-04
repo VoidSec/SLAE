@@ -83,8 +83,7 @@ encrypt_loop:
 	add esi, 8							; select next chunk "couple"				
     loop encrypt_loop					; ECX is 0? No, we go back at decrypt_loop and execute the cicle again
     exec:
-	int3
-	jmp short encrypted_shellcode		; ECX is 0! We've encrypted our shellcode and we can now directly jump into it
+	int3								; ECX is 0! We've encrypted our shellcode: x/24cb encrypted_shellcode
 
 shellcode_section:
         call encoder					; goto decoder, putting shellcode on the stack
