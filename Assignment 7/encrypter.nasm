@@ -81,10 +81,10 @@ encrypt_loop:
 		loop loop_32					; ECX is 0? No, we go back at loop_32 and execute the cicle again
 	; save encrypted v0, v1
 	save:
-	pop eax								; EAX=v0
-	mov dword [esi], eax				; store encrypted v0 back to shellcode "buffer"
 	pop eax								; EAX=v1
 	mov dword [esi+4], eax				; store encrypted v1 back to shellcode "buffer"
+	pop eax								; EAX=v0
+	mov dword [esi], eax				; store encrypted v0 back to shellcode "buffer"
 	; ------
 	mov ecx, 62							; for every loop_32 cicle I've saved v0,v1 on the stack (32*2)-2(already popped)
 	stack_clean:
