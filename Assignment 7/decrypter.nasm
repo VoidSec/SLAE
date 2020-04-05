@@ -31,6 +31,7 @@ key_loader:
 decoder:								; decoder
 	pop esi								; load address of our encrypted_shellcode into ESI (JMP CALL POP trick)
 	mov ecx, 3							; load the number of our shellcode chunks, used to loop. (shellcode length is 24. 24/4(DWORD)=6 blocks/2(chunks taken 2by 2)=3)
+	;cld									; clear direction flag
 
 decrypt_loop:
 	push ecx							; save counter status before entering 32 iteration loop
